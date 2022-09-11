@@ -1,0 +1,4 @@
+Simple timer application
+========================
+
+Based on gfxprim widgets.

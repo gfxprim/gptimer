@@ -1,0 +1,37 @@
+{
+ "info": {"version": 1, "license": "GPL-2.0-or-later"},
+ "layout": {
+  "rows": 3,
+  "widgets": [
+   {"type": "label", "tattr": "large|bold", "text": "00:00:00.0", "uid": "timer_time"},
+   {"type": "pbar", "unit": "none", "align": "hfill", "uid": "timer_pbar"},
+   {"type": "frame",
+    "align": "fill",
+    "title": "Settings",
+     "widget": {
+     "rows": 2,
+     "widgets": [
+      {"cols": 3, "align": "hfill",
+       "cpadf": "0, 1, 1, 0",
+       "cfill": "1, 1, 1",
+       "widgets": [
+        {"type": "spinner", "min": 0, "max": 24, "val": 0, "uid": "hours"},
+        {"type": "spinner", "min": 0, "max": 59, "val": 0, "uid": "mins"},
+        {"type": "spinner", "min": 0, "max": 59, "val": 10, "uid": "secs"}
+       ]
+      },
+      {"cols": 3, "align": "hfill",
+       "cpadf": "0, 1, 1, 0",
+       "cfill": "1, 1, 1",
+       "widgets": [
+        {"type": "button", "btype": "play", "on_event": "start_timer"},
+        {"type": "button", "btype": "pause", "on_event": "pause_timer"},
+        {"type": "button", "btype": "stop", "on_event": "stop_timer"}
+       ]
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

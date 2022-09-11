@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=gptimer
+GenericName=Timer
+Version=1.0
+Comment=Simple timer
+Exec=gptimer
+Icon=/usr/share/gptimer/gptimer.png
+Terminal=false
+Type=Application
+Categories=Utility;
