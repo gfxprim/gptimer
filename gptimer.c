@@ -10,7 +10,10 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/kd.h>
+#include <utils/gp_utils.h>
 #include <widgets/gp_widgets.h>
+
+#define APP_NAME "gptimer"
 
 static gp_widget *timer_time;
 static gp_widget *timer_pbar;
@@ -158,10 +161,45 @@ int pause_timer(gp_widget_event *ev)
 	return 0;
 }
 
+static void load_config(void)
+{
+	int val_hrs, val_mins, val_secs;
+
+	if (gp_app_cfg_scanf(APP_NAME, "timeout.txt", "%i:%i:%i",
+	                     &val_hrs, &val_mins, &val_secs) != 3)
+		return;
+
+	if (hours)
+		gp_widget_int_val_set(hours, val_hrs);
+
+	if (mins)
+		gp_widget_int_val_set(mins, val_mins);
+
+	if (secs)
+		gp_widget_int_val_set(secs, val_secs);
+}
+
+static void save_config(void)
+{
+	gp_app_cfg_printf(APP_NAME, "timeout.txt", "%02i:%02i:%02i\n",
+	                  gp_widget_int_val_get(hours),
+	                  gp_widget_int_val_get(mins),
+	                  gp_widget_int_val_get(secs));
+}
+
+static int app_on_event(gp_widget_event *ev)
+{
+	if (ev->type != GP_WIDGET_EVENT_FREE)
+		return 0;
+
+	save_config();
+	return 1;
+}
+
 int main(int argc, char *argv[])
 {
 	gp_htable *uids;
-	gp_widget *layout = gp_app_layout_load("gptimer", &uids);
+	gp_widget *layout = gp_app_layout_load(APP_NAME, &uids);
 
 	timer_time = gp_widget_by_uid(uids, "timer_time", GP_WIDGET_LABEL);
 	timer_pbar = gp_widget_by_uid(uids, "timer_pbar", GP_WIDGET_PROGRESSBAR);
@@ -176,7 +214,10 @@ int main(int argc, char *argv[])
 	gp_widget_on_event_set(mins, update_duration_callback, NULL);
 	gp_widget_on_event_set(secs, update_duration_callback, NULL);
 
+	load_config();
 	update_duration();
+
+	gp_app_on_event_set(app_on_event);
 
 	gp_widgets_main_loop(layout, "gptimer", NULL, argc, argv);
 
