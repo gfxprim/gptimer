@@ -196,10 +196,26 @@ static int app_on_event(gp_widget_event *ev)
 	return 1;
 }
 
+static gp_app_info app_info = {
+	.name = "gptimer",
+	.desc = "A simple timer app",
+	.version = "1.0",
+	.license = "GPL-2.0-or-later",
+	.url = "http://github.com/gfxprim/gptimer",
+	.authors = (gp_app_info_author []) {
+		{.name = "Cyril Hrubis", .email = "metan@ucw.cz", .years = "2022"},
+		{}
+	}
+};
+
 int main(int argc, char *argv[])
 {
 	gp_htable *uids;
-	gp_widget *layout = gp_app_layout_load(APP_NAME, &uids);
+	gp_widget *layout;
+
+	gp_app_info_set(&app_info);
+
+	layout = gp_app_layout_load(APP_NAME, &uids);
 
 	timer_time = gp_widget_by_uid(uids, "timer_time", GP_WIDGET_LABEL);
 	timer_pbar = gp_widget_by_uid(uids, "timer_pbar", GP_WIDGET_PROGRESSBAR);
