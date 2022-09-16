@@ -1,5 +1,5 @@
 CFLAGS=-W -Wall -Wextra -O2 $(shell gfxprim-config --cflags)
-LDLIBS=-lm -lgfxprim $(shell gfxprim-config --libs-widgets)
+LDLIBS=-lm -lrt -lgfxprim $(shell gfxprim-config --libs-widgets)
 BIN=gptimer
 DEP=$(BIN:=.dep)
 CFLAGS+=-DALARM_PATH=\"$(DESTDIR)/usr/share/$(BIN)/alarm.wav\"
