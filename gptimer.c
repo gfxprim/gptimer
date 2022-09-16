@@ -7,9 +7,10 @@
  */
 
 #include <time.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/ioctl.h>
-#include <linux/kd.h>
 #include <utils/gp_utils.h>
 #include <widgets/gp_widgets.h>
 
@@ -20,14 +21,20 @@ static gp_widget *timer_pbar;
 static gp_widget *hours;
 static gp_widget *mins;
 static gp_widget *secs;
+static gp_widget *wake;
 
 static struct timespec start_time;
 static uint64_t timer_elapsed_ms;
 static uint64_t timer_duration_ms;
 
+static timer_t wake_timer;
+static int wake_timer_created;
+
 #define HOURS_IN_MS (60 * 60 * 1000)
 #define MINS_IN_MS (60 * 1000)
 #define SECS_IN_MS (1000)
+
+#define WAKEUP_MARGIN 5
 
 static void update_timer(uint64_t elapsed)
 {
@@ -99,7 +106,9 @@ static uint32_t timer_tick_callback(gp_timer *self)
 	struct timespec cur_time;
 	uint64_t elapsed_ms;
 
-	clock_gettime(CLOCK_MONOTONIC, &cur_time);
+	(void) self;
+
+	clock_gettime(CLOCK_BOOTTIME_ALARM, &cur_time);
 
 	elapsed_ms = timespec_diff_ms(&cur_time, &start_time) + timer_elapsed_ms;
 
@@ -120,13 +129,48 @@ static gp_timer timer_tick = {
 	.id = "timer",
 };
 
+static void start_wake_alarm(void)
+{
+	signal(SIGALRM, SIG_IGN);
+
+	if (timer_create(CLOCK_BOOTTIME_ALARM, NULL, &wake_timer)) {
+		gp_dialog_msg_printf_run(GP_DIALOG_MSG_ERR,
+		                         "Failed to create wake alarm",
+		                         "%s", strerror(errno));
+		return;
+	}
+
+	wake_timer_created = 1;
+
+	struct itimerspec tmr = {};
+
+	tmr.it_value.tv_sec = (timer_duration_ms - timer_elapsed_ms)/SECS_IN_MS;
+	if (tmr.it_value.tv_sec > WAKEUP_MARGIN)
+		tmr.it_value.tv_sec -= WAKEUP_MARGIN;
+
+	timer_settime(wake_timer, 0, &tmr, NULL);
+}
+
+static void stop_wake_alarm(void)
+{
+	if (!wake_timer_created)
+		return;
+
+	timer_delete(&wake_timer);
+
+	wake_timer_created = 0;
+}
+
 int start_timer(gp_widget_event *ev)
 {
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
 
-	clock_gettime(CLOCK_MONOTONIC, &start_time);
+	clock_gettime(CLOCK_BOOTTIME_ALARM, &start_time);
 	gp_widgets_timer_ins(&timer_tick);
+
+	if (wake && gp_widget_class_bool_get(wake))
+		start_wake_alarm();
 
 	return 0;
 }
@@ -135,6 +179,8 @@ int stop_timer(gp_widget_event *ev)
 {
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
+
+	stop_wake_alarm();
 
 	timer_elapsed_ms = 0;
 
@@ -152,7 +198,9 @@ int pause_timer(gp_widget_event *ev)
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
 
-	clock_gettime(CLOCK_MONOTONIC, &cur_time);
+	stop_wake_alarm();
+
+	clock_gettime(CLOCK_BOOTTIME_ALARM, &cur_time);
 
 	timer_elapsed_ms += timespec_diff_ms(&cur_time, &start_time);
 
@@ -223,6 +271,7 @@ int main(int argc, char *argv[])
 	hours = gp_widget_by_cuid(uids, "hours", GP_WIDGET_CLASS_INT);
 	mins = gp_widget_by_cuid(uids, "mins", GP_WIDGET_CLASS_INT);
 	secs = gp_widget_by_cuid(uids, "secs", GP_WIDGET_CLASS_INT);
+	wake = gp_widget_by_cuid(uids, "wake", GP_WIDGET_CLASS_BOOL);
 
 	gp_htable_free(uids);
 
