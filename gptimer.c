@@ -36,6 +36,35 @@ static int wake_timer_created;
 
 #define WAKEUP_MARGIN 5
 
+static clockid_t timer_clock;
+
+static void check_posix_timer_support(void)
+{
+	struct timespec tmp;
+
+	if (!clock_gettime(CLOCK_BOOTTIME_ALARM, &tmp)) {
+		timer_clock = CLOCK_BOOTTIME_ALARM;
+		GP_DEBUG(1, "Selected CLOCK_BOOTTIME_ALARM");
+		return;
+	}
+
+	GP_DEBUG(1, "CLOCK_BOOTTIME_ALARM %s", strerror(errno));
+
+	if (wake)
+		gp_widget_disable(wake);
+
+	if (clock_gettime(CLOCK_MONOTONIC_RAW, &tmp)) {
+		GP_DEBUG(1, "Selected CLOCK_MONOTONIC_RAW");
+		timer_clock = CLOCK_MONOTONIC_RAW;
+		return;
+	}
+
+	GP_DEBUG(1, "CLOCK_MONOTONIC_RAW %s", strerror(errno));
+
+	timer_clock = CLOCK_MONOTONIC;
+	GP_DEBUG(1, "Selected CLOCK_MONOTONIC_RAW");
+}
+
 static void update_timer(uint64_t elapsed)
 {
 	uint64_t cur_time = timer_duration_ms - elapsed;
@@ -108,7 +137,7 @@ static uint32_t timer_tick_callback(gp_timer *self)
 
 	(void) self;
 
-	clock_gettime(CLOCK_BOOTTIME_ALARM, &cur_time);
+	clock_gettime(timer_clock, &cur_time);
 
 	elapsed_ms = timespec_diff_ms(&cur_time, &start_time) + timer_elapsed_ms;
 
@@ -133,7 +162,7 @@ static void start_wake_alarm(void)
 {
 	signal(SIGALRM, SIG_IGN);
 
-	if (timer_create(CLOCK_BOOTTIME_ALARM, NULL, &wake_timer)) {
+	if (timer_create(timer_clock, NULL, &wake_timer)) {
 		gp_dialog_msg_printf_run(GP_DIALOG_MSG_ERR,
 		                         "Failed to create wake alarm",
 		                         "%s", strerror(errno));
@@ -166,7 +195,7 @@ int start_timer(gp_widget_event *ev)
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
 
-	clock_gettime(CLOCK_BOOTTIME_ALARM, &start_time);
+	clock_gettime(timer_clock, &start_time);
 	gp_widgets_timer_ins(&timer_tick);
 
 	if (wake && gp_widget_bool_get(wake))
@@ -200,7 +229,7 @@ int pause_timer(gp_widget_event *ev)
 
 	stop_wake_alarm();
 
-	clock_gettime(CLOCK_BOOTTIME_ALARM, &cur_time);
+	clock_gettime(timer_clock, &cur_time);
 
 	timer_elapsed_ms += timespec_diff_ms(&cur_time, &start_time);
 
@@ -279,6 +308,7 @@ int main(int argc, char *argv[])
 	gp_widget_on_event_set(mins, update_duration_callback, NULL);
 	gp_widget_on_event_set(secs, update_duration_callback, NULL);
 
+	check_posix_timer_support();
 	load_config();
 	update_duration();
 
