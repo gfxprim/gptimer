@@ -2,3 +2,13 @@ Simple timer application
 ========================
 
 Based on gfxprim widgets.
+
+image::https://raw.githubusercontent.com/gfxprim/gptimer/master/screenshot.png["Screenshot"]
+
+
+Features
+--------
+
+- saves settings on exit
+- plays sound on timer expiration
+- can wake up machine from suspend
