@@ -169,7 +169,7 @@ int start_timer(gp_widget_event *ev)
 	clock_gettime(CLOCK_BOOTTIME_ALARM, &start_time);
 	gp_widgets_timer_ins(&timer_tick);
 
-	if (wake && gp_widget_class_bool_get(wake))
+	if (wake && gp_widget_bool_get(wake))
 		start_wake_alarm();
 
 	return 0;
