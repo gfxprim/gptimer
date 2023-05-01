@@ -259,9 +259,9 @@ static void load_config(void)
 static void save_config(void)
 {
 	gp_app_cfg_printf(APP_NAME, "timeout.txt", "%02i:%02i:%02i\n",
-	                  gp_widget_int_val_get(hours),
-	                  gp_widget_int_val_get(mins),
-	                  gp_widget_int_val_get(secs));
+	                  (int)gp_widget_int_val_get(hours),
+	                  (int)gp_widget_int_val_get(mins),
+	                  (int)gp_widget_int_val_get(secs));
 }
 
 static int app_on_event(gp_widget_event *ev)
