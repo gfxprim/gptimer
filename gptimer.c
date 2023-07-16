@@ -144,12 +144,12 @@ static uint32_t timer_tick_callback(gp_timer *self)
 	if (elapsed_ms >= timer_duration_ms) {
 		update_timer(timer_duration_ms);
 		play_alarm();
-		return GP_TIMER_PERIOD_STOP;
+		return GP_TIMER_STOP;
 	}
 
 	update_timer(elapsed_ms);
 
-	return 0;
+	return self->period;
 }
 
 static gp_timer timer_tick = {
