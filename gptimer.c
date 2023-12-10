@@ -273,7 +273,7 @@ static int app_on_event(gp_widget_event *ev)
 	return 1;
 }
 
-static gp_app_info app_info = {
+gp_app_info app_info = {
 	.name = "gptimer",
 	.desc = "A simple timer app",
 	.version = "1.0",
@@ -289,8 +289,6 @@ int main(int argc, char *argv[])
 {
 	gp_htable *uids;
 	gp_widget *layout;
-
-	gp_app_info_set(&app_info);
 
 	layout = gp_app_layout_load(APP_NAME, &uids);
 
@@ -314,7 +312,7 @@ int main(int argc, char *argv[])
 
 	gp_app_on_event_set(app_on_event);
 
-	gp_widgets_main_loop(layout, "gptimer", NULL, argc, argv);
+	gp_widgets_main_loop(layout, NULL, argc, argv);
 
 	return 0;
 }
