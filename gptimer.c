@@ -77,8 +77,8 @@ static void update_timer(uint64_t elapsed)
 	gp_widget_label_printf(timer_time, "%02i:%02i:%02i.%1i", hours, mins, secs, msecs);
 
 	if (timer_pbar) {
-		gp_widget_pbar_set_max(timer_pbar, timer_duration_ms);
-		gp_widget_pbar_set(timer_pbar, cur_time);
+		gp_widget_pbar_max_set(timer_pbar, timer_duration_ms);
+		gp_widget_pbar_val_set(timer_pbar, cur_time);
 	}
 }
 
